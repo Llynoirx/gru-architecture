@@ -77,7 +77,7 @@ class RNNCell(object):
 
         affine_input = np.dot(x, self.W_ih.T) + self.b_ih
         affine_hidden = np.dot(h_prev_t, self.W_hh.T) + self.b_hh
-        h_t = np.tanh(affine_input + affine_hidden)
+        h_t = self.activation.forward(affine_input + affine_hidden)
 
         return h_t
 
