@@ -15,12 +15,14 @@ class RNNPhonemeClassifier(object):
         self.num_layers = num_layers
 
         # TODO: Understand then uncomment this code :)
-        # self.rnn = [
-        #     RNNCell(input_size, hidden_size) if i == 0 
-        #         else RNNCell(hidden_size, hidden_size)
-        #             for i in range(num_layers)
-        # ]
-        # self.output_layer = Linear(hidden_size, output_size)
+        # Creates RNN where 1st layer takes in original input and
+        # subsequent layers take in the previous layer's hidden statee
+        self.rnn = [
+            RNNCell(input_size, hidden_size) if i == 0 
+                else RNNCell(hidden_size, hidden_size)
+                    for i in range(num_layers)
+        ]
+        self.output_layer = Linear(hidden_size, output_size)
 
         # store hidden states at each time step, [(seq_len+1) * (num_layers, batch_size, hidden_size)]
         self.hiddens = []
@@ -83,18 +85,24 @@ class RNNPhonemeClassifier(object):
         ### Add your code here --->
         # (More specific pseudocode may exist in lecture slides)
         # Iterate through the sequence
+        for seq_idx in range(seq_len):
+            hidden = np.zeros((self.num_layers, batch_size, self.hidden_size))
+            input = self.x[:, seq_idx, :]
         #   Iterate over the length of your self.rnn (through the layers)
+            for layer_idx, layer in enumerate(self.rnn):
         #       Run the rnn cell with the correct parameters and update
         #       the parameters as needed. Update hidden.
+                hidden[layer_idx, :, :] = layer.forward(input, self.hiddens[-1][layer_idx])
+                input = hidden[layer_idx, :, :]
         #   Similar to above, append a copy of the current hidden array to the hiddens list
+            self.hiddens.append(hidden.copy())
         
         # TODO
-
         # Get the outputs from the last time step using the linear layer and return it
+        logits = self.output_layer.forward(input)
         # <--------------------------
         
-        # return logits 
-        raise NotImplementedError
+        return logits 
 
     def backward(self, delta):
         """RNN Back Propagation Through Time (BPTT).
