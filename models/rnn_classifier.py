@@ -85,9 +85,9 @@ class RNNPhonemeClassifier(object):
         ### Add your code here --->
         # (More specific pseudocode may exist in lecture slides)
         # Iterate through the sequence
-        for seq_idx in range(seq_len):
-            hidden = np.zeros((self.num_layers, batch_size, self.hidden_size))
-            input = self.x[:, seq_idx, :]
+        for time_step in range(seq_len):
+            hidden = np.zeros((self.num_layers, batch_size, self.hidden_size), dtype=float)
+            input = self.x[:, time_step, :]
         #   Iterate over the length of your self.rnn (through the layers)
             for layer_idx, layer in enumerate(self.rnn):
         #       Run the rnn cell with the correct parameters and update
@@ -151,6 +151,15 @@ class RNNPhonemeClassifier(object):
 
         """
         # TODO
+        for time_step in reversed(range(seq_len)):
+            for layer_idx in reversed(range(self.num_layers)):
+                h_prev_l = self.x[:, time_step, :] if layer_idx==0 else self.hiddens[time_step+1][layer_idx-1] 
+                h_prev_t = self.hiddens[time_step][layer_idx]
+                h_t = self.hiddens[time_step+1][layer_idx]
 
-        # return dh / batch_size
-        raise NotImplementedError
+                dx, dh_prev_t = self.rnn[layer_idx].backward(dh[layer_idx], h_t, h_prev_l, h_prev_t) 
+                dh[layer_idx-1] += dx if layer_idx>0 else 0
+                dh[layer_idx] = dh_prev_t
+        
+        return dh / batch_size
+
