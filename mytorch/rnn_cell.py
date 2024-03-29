@@ -88,7 +88,7 @@ class RNNCell(object):
 
         Input (see writeup for explanation)
         -----
-        delta: (batch_size, hidden_size)
+        delta: (batch_size (N), hidden_size (H_out)) N x H_out
                 Gradient w.r.t the current hidden layer
 
         h_t: (batch_size, hidden_size)
@@ -113,18 +113,18 @@ class RNNCell(object):
         # 0) Done! Step backward through the tanh activation function.
         # Note, because of BPTT, we had to externally save the tanh state, and
         # have modified the tanh activation function to accept an optionally input.
-        dz = None # TODO
+    
+        dz = delta * (1 - (h_t**2))
 
         # 1) Compute the averaged gradients of the weights and biases
-        self.dW_ih += None # TODO
-        self.dW_hh += None # TODO
-        self.db_ih += None # TODO
-        self.db_hh += None # TODO
+        self.dW_ih += np.dot(dz.T, h_prev_l) / batch_size # dL/dW_ih: H_out x H_in
+        self.dW_hh += np.dot(dz.T, h_prev_t) / batch_size # dL/dW_hh: H_out x H_out
+        self.db_ih += np.mean(dz, axis=0) # dL/db_ih: H_out
+        self.db_hh += np.mean(dz, axis=0) # dL/db_hh: H_out
 
         # # 2) Compute dx, dh_prev_t
-        dx        = None # TODO
-        dh_prev_t = None # TODO
+        dx        = np.dot(dz, self.W_ih) # dL/dx: N x H_in
+        dh_prev_t = np.dot(dz, self.W_hh) # h_{t-1, l}: N x H_out
 
         # 3) Return dx, dh_prev_t
-        # return dx, dh_prev_t
-        raise NotImplementedError
+        return dx, dh_prev_t
