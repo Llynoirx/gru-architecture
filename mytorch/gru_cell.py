@@ -134,20 +134,16 @@ class GRUCell(object):
         # 2) When in doubt about shapes, please refer to the table in the writeup.
         # 3) Know that the autograder grades the gradients in a certain order, and the local autograder will tell you which gradient you are currently failing.
 
-        # Ensure delta is a column vector
-        delta = delta.reshape(self.h, 1)
+        delta = delta.reshape(-1, 1)
 
-        # Compute the gradients of the gates
         d_n = delta * (1 - self.z) * (1 - self.n ** 2)
         d_z = delta * (self.hidden - self.n) * self.z * (1 - self.z)
         d_r = (delta * self.n * (1 - self.n ** 2) * self.r * (1 - self.r))
 
-        # Reshape x from (input_dim,) to (input_dim, 1) for matrix multiplication
         x = self.x.reshape(self.d, 1)
-        hidden_prev = self.hidden.reshape(self.h, 1)  # Shape (hidden_dim, 1)
+        hidden_prev = self.hidden.reshape(self.h, 1)  
 
-        # Compute updates for the weights and biases
-        self.dWnx += np.dot(d_n, x.T)  # Make sure to use np.dot for proper matrix multiplication
+        self.dWnx += np.dot(d_n, x.T)  
         self.dWnh += np.dot(d_n * self.r, hidden_prev.T)
         self.dbnx += np.sum(d_n, axis=1)
         
@@ -159,29 +155,15 @@ class GRUCell(object):
         self.dWrh += np.dot(d_r, hidden_prev.T)
         self.dbrx += np.sum(d_r, axis=1)
         
-        # Compute the gradients w.r.t. the inputs
         dx = np.dot(self.Wnx.T, d_n) + np.dot(self.Wzx.T, d_z) + np.dot(self.Wrx.T, d_r)
         dh_prev = np.dot(self.Wnh.T, d_n * self.r) + np.dot(self.Wzh.T, d_z) + np.dot(self.Wrh.T, d_r) + (delta * self.z)
         
-        # Squeeze to remove dimensions of 1 for dx and dh_prev before returning
         dx = dx.squeeze()
-        dh_prev = dh_prev.squeeze()
-
-        return dx, dh_prev
-
-
-    
-    
+        dh_prev_t = dh_prev.squeeze()  
         
-        
-        
-        # assert dx.shape == (self.d,)
-        # assert dh_prev_t.shape == (self.h,)
+        assert dx.shape == (self.d,)
+        assert dh_prev_t.shape == (self.h,)
 
-
-        # return dx, dh_prev_t
+        return dx, dh_prev_t
     
     
-
-
-

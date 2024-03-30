@@ -121,6 +121,5 @@ class BeamSearchDecoder(object):
         T = y_probs.shape[1]
         bestPath, FinalPathScore = None, None
         
+        return bestPath, FinalPathScore
         
-        #return bestPath, FinalPathScore
-        raise NotImplementedError
