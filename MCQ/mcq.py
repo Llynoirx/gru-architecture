@@ -1,6 +1,6 @@
 def question_1():
     # return ""
-    raise NotImplementedError
+    return "B"
 
 
 def question_2():
@@ -20,6 +20,5 @@ def question_4():
 
 
 def question_5():
-    # return ""
-    raise NotImplementedError
+    return "A"
 
