@@ -136,59 +136,46 @@ class GRUCell(object):
         # 2) When in doubt about shapes, please refer to the table in the writeup.
         # 3) Know that the autograder grades the gradients in a certain order, and the local autograder will tell you which gradient you are currently failing. 
 
-
-        # delta = delta.reshape(1, -1)  # (1, hidden_dim)
-        self.x = self.x.reshape(1, -1)  
-        self.hidden = self.hidden.reshape(1, -1) 
         self.r = self.r.reshape(1, -1)  
         self.z = self.z.reshape(1, -1)  
-        self.n = self.n.reshape(1, -1)   
+        self.n = self.n.reshape(1, -1) 
+        self.x = self.x.reshape(1, -1)  
+        self.hidden = self.hidden.reshape(1, -1)   
 
+        dr = np.zeros_like(self.r, dtype=np.float64)
+        dz = np.zeros_like(self.z, dtype=np.float64)
+        dn = np.zeros_like(self.n, dtype=np.float64)
         dx = np.zeros_like(self.x, dtype=np.float64)
         dh_prev_t = np.zeros_like(self.hidden, dtype=np.float64)
-        dn = np.zeros_like(self.n, dtype=np.float64)
-        dz = np.zeros_like(self.z, dtype=np.float64)
-        dr = np.zeros_like(self.r, dtype=np.float64)
-
-        dz += delta * (self.hidden - self.n) 
+ 
         dn += delta * (1 - self.z)
-        dh_prev_t += delta * self.z
-
         dn_actftn = dn * (1-self.n**2)
         dn_actftn_r = dn_actftn * self.r
-
         self.dWnx += np.dot(dn_actftn.T, self.x)
-        dx += np.dot(dn_actftn, self.Wnx)
-        self.dbnx += np.sum(dn_actftn, axis=0)
-        dr += dn_actftn * self.n_state.T
-
         self.dWnh += np.dot(dn_actftn_r.T, self.hidden)
-        dh_prev_t += np.dot(dn_actftn_r, self.Wnh)
+        self.dbnx += np.sum(dn_actftn, axis=0)
         self.dbnh += np.sum(dn_actftn_r, axis=0)
 
+        dz += delta * (self.hidden - self.n)
         dz_actftn = dz * self.z * (1-self.z)
-
-        dx += np.dot(dz_actftn, self.Wzx)
         self.dWzx += np.dot(dz_actftn.T, self.x)
         self.dWzh += np.dot(dz_actftn.T, self.hidden)
-        dh_prev_t += np.dot(dz_actftn, self.Wzh)
         self.dbzx += np.sum(dz_actftn, axis=0)
         self.dbzh += np.sum(dz_actftn, axis=0)
 
+        dr += dn_actftn * self.n_state.T
         dr_actftn = dr * self.r * (1-self.r)
-        dx += np.dot(dr_actftn, self.Wrx)
         self.dWrx += np.dot(dr_actftn.T, self.x)
         self.dWrh += np.dot(dr_actftn.T, self.hidden)
-        dh_prev_t += np.dot(dr_actftn, self.Wrh)
         self.dbrx += np.sum(dr_actftn, axis=0)
         self.dbrh += np.sum(dr_actftn, axis=0)
 
-        # dh_prev_t += dz.dot(self.Wzh.T) + dr.dot(self.Wrh.T) + dn.dot(self.Wnh.T)
-        # dx = dz.dot(self.Wzx) + dr.dot(self.Wrx) + dn.dot(self.Wnx)
+        dx = (np.dot(dn_actftn, self.Wnx) + np.dot(dz_actftn, self.Wzx) +\
+               np.dot(dr_actftn, self.Wrx)).reshape(-1)
 
-        # Ensure correct output shapes
-        dx = dx.reshape(-1)
-        dh_prev_t = dh_prev_t.reshape(-1)
+        dh_prev_t = (delta * self.z + np.dot(dn_actftn_r, self.Wnh) +\
+                    np.dot(dz_actftn, self.Wzh) +np.dot(dr_actftn, self.Wrh)).reshape(-1)
+
         assert dx.shape == (self.d,)
         assert dh_prev_t.shape == (self.h,)
 
