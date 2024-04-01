@@ -57,13 +57,13 @@ class CharacterPredictor(object):
             hidden state at current time-step.
 
         """
-        hnext = None # TODO
+        hnext = self.rnn.forward(x, h)
         # self.projection expects input in the form of batch_size * input_dimension
         # Therefore, reshape the input of self.projection as (1,-1)
-        logits = None # TODO
+        logits = self.projection.forward(hnext)
         # logits = logits.reshape(-1,) # uncomment once code implemented
-        # return logits, hnext
-        raise NotImplementedError
+        return logits, hnext
+        # raise NotImplementedError
 
 
 def inference(net, inputs):
@@ -87,5 +87,9 @@ def inference(net, inputs):
 
     """
     
-    # This code should not take more than 10 lines. 
-    raise NotImplementedError
+    logits = []
+    hnext = np.zeros(net.hiddenDim)
+    for t in range(len(inputs)):
+        logit, hnext = net.forward(inputs[t], hnext)
+        logits.append(logit.copy())
+    return np.array(logits)
